@@ -8,6 +8,11 @@ const {
   getSpreadSheetValues
 } = require('./googleSheetService.js');
 
+const LoginRoute = require('./routes/login.route');
+
+require('dotenv').config()
+const cors = require('cors');
+
 const spreadsheetId = process.argv[2];
 const sheetName = process.argv[3];
 let data = {};
@@ -44,6 +49,13 @@ app.get('/', (req, res) => {
   testGetSpreadSheet();
   testGetSpreadSheetValues();
 })
+
+app.use(express.json())
+
+// allow sharing info between backend and frontend
+app.use(cors());
+
+app.use('/auth', LoginRoute)
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
