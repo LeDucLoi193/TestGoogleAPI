@@ -20,7 +20,9 @@ function App() {
               <Login />
             </Route>
             <Route exact path="/">
-              <Home />
+              {
+                isLogin ? <Home /> : <Redirect to="/sign-in" />
+              }
             </Route>
           </Switch>
         </div> 

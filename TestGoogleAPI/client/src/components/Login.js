@@ -1,10 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { Input, Space, Button, Modal, Form, Checkbox, Select } from 'antd';
+import { Input, Space, Button, Modal, Form, Checkbox, Select, Tooltip } from 'antd';
 import { Link, Redirect, Route } from "react-router-dom";
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import logo from '../logo.svg';
-
-import Home from '../components/Home';
 
 import {LoginContext} from '../contexts/login';
 
@@ -48,8 +46,14 @@ const tailFormItemLayout = {
 const Login = () => {
   const [form] = Form.useForm();
   const [visible, setVisible] = useState(false);
-  const [username, setUsername] = useState("");
-  const [pass, setPass] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  let loginInfo = {
+    username: "",
+    pass: ""
+  }
+
+  let signUpInfo = {};
 
   const [isLogin, setIsLogin] = useContext(LoginContext);
 
@@ -75,8 +79,7 @@ const Login = () => {
 
   const submitData = () => {
     axios.post('http://localhost:8080/auth', {
-      username: username,
-      password: pass
+      ...loginInfo
     })
     .then((res) => {
       if (res.status === 200) {
@@ -85,6 +88,27 @@ const Login = () => {
     })
     .catch((err) => {
       console.log(err);
+      alert(err.response.data.message);
+    })
+  }
+
+  const handleSignUp = () => {
+    setLoading(true);
+    if (signUpInfo.phoneNumber && signUpInfo.phoneNumber.length === 9) {
+      signUpInfo.phoneNumber = "0" + signUpInfo.phoneNumber;
+    }
+    axios.post('http://localhost:8080/auth/sign-up', {
+      ...signUpInfo
+    })
+    .then((res) => {
+      if (res.status === 200) {
+        setVisible(false);
+        console.log(res.data.message);
+      }
+    })
+    .catch((err) => {
+      setVisible(false);
+      alert(err.response.data.message);
     })
   }
 
@@ -118,7 +142,7 @@ const Login = () => {
               prefix={<UserOutlined 
               className="site-form-item-icon" />} 
               placeholder="Username" 
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {loginInfo.username = e.target.value}}
             />
           </Form.Item>
           <Form.Item
@@ -135,7 +159,7 @@ const Login = () => {
               prefix={<LockOutlined className="site-form-item-icon" />}
               type="password"
               placeholder="Password"
-              onChange={(e) => setPass(e.target.value)}
+              onChange={(e) => {loginInfo.password = e.target.value}}
             />
           </Form.Item>
           <Form.Item className="form-checkbox-forgot">
@@ -160,6 +184,7 @@ const Login = () => {
             <span onClick={() => showModal()} className="form-subspan">
                Or Register now!
             </span>
+
             <Modal
               title="Sign Up"
               visible={visible}
@@ -176,6 +201,20 @@ const Login = () => {
                 scrollToFirstError
               >
                 <Form.Item
+                  name="username"
+                  label={
+                    <span>
+                      Username&nbsp;
+                      <Tooltip title="What do you want others to call you?">
+                        <QuestionCircleOutlined />
+                      </Tooltip>
+                    </span>
+                  }
+                  rules={[{ required: true, message: 'Please input your username!', whitespace: true }]}
+                >
+                  <Input onChange={(e) => {signUpInfo.username = e.target.value}} />
+                </Form.Item>
+                <Form.Item
                   name="email"
                   label="E-mail"
                   rules={[
@@ -189,7 +228,7 @@ const Login = () => {
                     },
                   ]}
                 >
-                  <Input />
+                  <Input onChange={(e) => {signUpInfo.email = e.target.value}} />
                 </Form.Item>
 
                 <Form.Item
@@ -203,7 +242,7 @@ const Login = () => {
                   ]}
                   hasFeedback
                 >
-                  <Input.Password />
+                  <Input.Password onChange={(e) => {signUpInfo.password = e.target.value}} />
                 </Form.Item>
 
                 <Form.Item
@@ -245,6 +284,7 @@ const Login = () => {
                     style={{
                       width: '100%',
                     }}
+                    onChange={(e) => {signUpInfo.phoneNumber = e.target.value}}
                   />
                 </Form.Item>
 
@@ -259,7 +299,7 @@ const Login = () => {
                   ]}
                   {...tailFormItemLayout}
                 >
-                  <Checkbox>
+                  <Checkbox onChange={(e) => {signUpInfo.agree = e.target.checked}} >
                     I have read the <a href="#">agreement</a>
                   </Checkbox>
                 </Form.Item>
@@ -274,12 +314,15 @@ const Login = () => {
                     type="primary" 
                     htmlType="submit"
                     style={{marginLeft: "2rem"}}
+                    onClick={() => handleSignUp()}
+                    loading={loading}
                   >
                     Register
                   </Button>
                 </Form.Item>
               </Form>
             </Modal>
+
           </Form.Item>
         </Form>
       </Space>
